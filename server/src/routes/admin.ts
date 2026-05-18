@@ -851,62 +851,57 @@ router.post(
         client: req.body.clientPassword,
       };
 
-      const results: Array<{
-        email: string;
-        role: string;
-        auth0Created: boolean;
-        dbAction: "inserted" | "updated";
-      }> = [];
-
-      for (const spec of TEST_ACCOUNTS) {
-        const upsert = await auth0ManagementService.upsertUserWithPassword({
-          email: spec.email,
-          password: passwordByRole[spec.role]!,
-          fullName: spec.fullName,
-          role: spec.role,
-          username: spec.username ?? null,
-        });
-
-        const patch = {
-          email: spec.email,
-          username: spec.username ?? null,
-          fullName: spec.fullName,
-          role: spec.role,
-          bio: "bio" in spec ? spec.bio ?? null : null,
-          specialties: "specialties" in spec ? spec.specialties ?? null : null,
-          pricingChat: "pricingChat" in spec ? spec.pricingChat ?? 0 : 0,
-          pricingVoice: "pricingVoice" in spec ? spec.pricingVoice ?? 0 : 0,
-          pricingVideo: "pricingVideo" in spec ? spec.pricingVideo ?? 0 : 0,
-          balance: "startingBalanceCents" in spec ? spec.startingBalanceCents ?? 0 : 0,
-          updatedAt: new Date(),
-        };
-
-        const [existing] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.auth0Id, upsert.auth0Id));
-
-        if (existing) {
-          await db.update(users).set(patch).where(eq(users.id, existing.id));
-          results.push({
+      const results = await Promise.all(
+        TEST_ACCOUNTS.map(async (spec) => {
+          const upsert = await auth0ManagementService.upsertUserWithPassword({
             email: spec.email,
+            password: passwordByRole[spec.role]!,
+            fullName: spec.fullName,
             role: spec.role,
-            auth0Created: upsert.created,
-            dbAction: "updated",
+            username: spec.username ?? null,
           });
-        } else {
-          await db
-            .insert(users)
-            .values({ auth0Id: upsert.auth0Id, ...patch })
-            .returning({ id: users.id });
-          results.push({
+
+          const patch = {
             email: spec.email,
+            username: spec.username ?? null,
+            fullName: spec.fullName,
             role: spec.role,
-            auth0Created: upsert.created,
-            dbAction: "inserted",
-          });
-        }
-      }
+            bio: "bio" in spec ? spec.bio ?? null : null,
+            specialties: "specialties" in spec ? spec.specialties ?? null : null,
+            pricingChat: "pricingChat" in spec ? spec.pricingChat ?? 0 : 0,
+            pricingVoice: "pricingVoice" in spec ? spec.pricingVoice ?? 0 : 0,
+            pricingVideo: "pricingVideo" in spec ? spec.pricingVideo ?? 0 : 0,
+            balance: "startingBalanceCents" in spec ? spec.startingBalanceCents ?? 0 : 0,
+            updatedAt: new Date(),
+          };
+
+          const [existing] = await db
+            .select({ id: users.id })
+            .from(users)
+            .where(eq(users.auth0Id, upsert.auth0Id));
+
+          if (existing) {
+            await db.update(users).set(patch).where(eq(users.id, existing.id));
+            return {
+              email: spec.email,
+              role: spec.role,
+              auth0Created: upsert.created,
+              dbAction: "updated" as const,
+            };
+          } else {
+            await db
+              .insert(users)
+              .values({ auth0Id: upsert.auth0Id, ...patch })
+              .returning({ id: users.id });
+            return {
+              email: spec.email,
+              role: spec.role,
+              auth0Created: upsert.created,
+              dbAction: "inserted" as const,
+            };
+          }
+        }),
+      );
 
       logger.info(
         { adminId: req.user!.id, results },
