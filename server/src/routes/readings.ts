@@ -4,7 +4,6 @@ import { z } from "zod";
 import { getDb } from "../db/db";
 import { users, readings, transactions } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
-import { requireRole } from "../middleware/rbac";
 import { requireParticipant } from "../middleware/rbac";
 import { validateBody } from "../middleware/validate";
 import { AgoraService } from "../services/agora-service";
