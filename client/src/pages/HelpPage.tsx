@@ -589,16 +589,11 @@ export function HelpPage() {
                 </p>
               </div>
               <a
-                href="#" /* TODO: Replace with your hosted PDF URL (Google Drive, Dropbox, etc.) */
+                href="/SoulSeer_Reader_Application.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn--secondary"
                 aria-label="Download Reader Application PDF"
-                onClick={(e) => {
-                  // Remove this handler once you have a real PDF URL
-                  e.preventDefault();
-                  alert('PDF coming soon! Please use the online form below or email apply@soulseer.app');
-                }}
               >
                 Download PDF
               </a>
