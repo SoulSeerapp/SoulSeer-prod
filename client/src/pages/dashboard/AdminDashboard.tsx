@@ -685,6 +685,7 @@ export function AdminDashboard() {
                       <ImageUploadField
                         label="Profile Image (optional)"
                         value={crForm.profileImage || null}
+                        readerId="new"
                         onChange={(url) =>
                           setCrForm((p) => ({ ...p, profileImage: url ?? '' }))
                         }
@@ -945,6 +946,7 @@ export function AdminDashboard() {
             <ImageUploadField
               label="Profile Image"
               value={editForm.profileImage || null}
+              readerId={editUser?.id ?? 'new'}
               onChange={(url) =>
                 setEditForm((p) => ({ ...p, profileImage: url ?? '' }))
               }

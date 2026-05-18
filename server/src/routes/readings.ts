@@ -102,7 +102,7 @@ router.post(
         .returning();
 
       // Notify reader via WebSocket
-      wsService.send(readerId, "reading:request", {
+      wsService.send(readerId, "reading:new_request", {
         readingId: reading!.id,
         clientId: req.user!.id,
         readingType,
@@ -279,6 +279,56 @@ router.post(
         uid: tokens.uid,
         expiration: tokens.expiration,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ─── POST /api/readings/:id/rtmp/start — Start RTMP push ─────────────────────
+const startRtmpSchema = z.object({
+  rtmpUrl: z.string().url(),
+});
+
+router.post(
+  "/:id/rtmp/start",
+  requireAuth,
+  requireParticipant,
+  validateBody(startRtmpSchema),
+  async (req, res, next) => {
+    try {
+      const reading = req.reading!;
+
+      if (reading.status !== "active" && reading.status !== "in_progress") {
+        res.status(409).json({ error: "Reading must be active to start RTMP" });
+        return;
+      }
+
+      await AgoraService.startRtmpPush(
+        `reading_${reading.id}`,
+        req.body.rtmpUrl,
+        req.user!.id,
+      );
+
+      res.json({ ok: true });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// ─── POST /api/readings/:id/rtmp/stop — Stop RTMP push ───────────────────────
+router.post(
+  "/:id/rtmp/stop",
+  requireAuth,
+  requireParticipant,
+  async (req, res, next) => {
+    try {
+      const reading = req.reading!;
+
+      await AgoraService.stopRtmpPush(`reading_${reading.id}`);
+
+      res.json({ ok: true });
     } catch (err) {
       next(err);
     }

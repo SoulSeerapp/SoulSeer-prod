@@ -1,8 +1,5 @@
 import { useAuth } from '../../hooks/useAuth';
 import { LoadingPage, Button } from '../../components/ui';
-import { ClientDashboard } from './ClientDashboard';
-import { ReaderDashboard } from './ReaderDashboard';
-import { AdminDashboard } from './AdminDashboard';
 import { Navigate } from 'react-router-dom';
 
 export function DashboardPage() {
@@ -48,11 +45,11 @@ export function DashboardPage() {
 
   switch (user.role) {
     case 'admin':
-      return <AdminDashboard />;
+      return <Navigate to="/dashboard/admin" replace />;
     case 'reader':
-      return <ReaderDashboard />;
+      return <Navigate to="/dashboard/reader" replace />;
     case 'client':
     default:
-      return <ClientDashboard />;
+      return <Navigate to="/dashboard/client" replace />;
   }
 }

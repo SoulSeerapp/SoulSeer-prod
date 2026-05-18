@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/ToastProvider';
 import { useWebSocketEvent } from '../../hooks/useWebSocket';
-import { useReadingHeartbeat } from '../../hooks/useReadingHeartbeat';
 import { apiService } from '../../services/api';
 import {
   Button,
@@ -609,7 +608,14 @@ export function ReadingSessionPage() {
     !summary &&
     reading.status !== 'completed' &&
     reading.status !== 'cancelled';
-  useReadingHeartbeat(reading?.id ?? null, isLive);
+
+  useEffect(() => {
+    if (!isLive || !reading?.id) return;
+    const interval = setInterval(() => {
+      apiService.post(`/api/readings/${reading.id}/heartbeat`).catch(() => {});
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [isLive, reading?.id]);
 
   /* ── WebSocket-pushed real-time events for this reading ───────── */
   const readingIdNum = reading?.id ?? null;

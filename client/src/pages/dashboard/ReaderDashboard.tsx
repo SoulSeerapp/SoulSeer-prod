@@ -182,13 +182,25 @@ export function ReaderDashboard() {
 
   /* ── Real-time: new incoming request ── */
   useWebSocketEvent<{ readingId: number; clientName?: string }>(
-    'reading:request',
+    'reading:new_request',
     useCallback(
       (p) => {
         addToast('info', `New reading request from ${p.clientName ?? 'a client'}`);
         loadPending();
       },
       [addToast, loadPending],
+    ),
+  );
+
+  /* ── Real-time: request accepted ── */
+  useWebSocketEvent<{ readingId: number }>(
+    'reading:accepted',
+    useCallback(
+      () => {
+        // Only navigate if we were the one who accepted, or to just clear the UI
+        loadPending();
+      },
+      [loadPending],
     ),
   );
 

@@ -15,11 +15,15 @@ import { ReadersPage } from './pages/readers/ReadersPage';
 import { ReaderProfilePage } from './pages/readers/ReaderProfilePage';
 import { CommunityHubPage } from './pages/community/CommunityHubPage';
 import { DashboardPage } from './pages/dashboard/DashboardPage';
+import { AdminDashboard } from './pages/dashboard/AdminDashboard';
+import { ReaderDashboard } from './pages/dashboard/ReaderDashboard';
+import { ClientDashboard } from './pages/dashboard/ClientDashboard';
 import { ReadingSessionPage } from './pages/reading/ReadingSessionPage';
 import { AboutPage } from './pages/AboutPage';
 import { HelpPage } from './pages/HelpPage';
 import { LoginPage } from './pages/LoginPage';
 import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
+import { TermsOfServicePage } from './pages/TermsOfServicePage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 function AppRoutes() {
@@ -37,11 +41,15 @@ function AppRoutes() {
           <Route path="/readers/:id" element={<ReaderProfilePage />} />
           <Route path="/community" element={<CommunityHubPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/dashboard/reader" element={<ReaderDashboard />} />
+          <Route path="/dashboard/client" element={<ClientDashboard />} />
           <Route path="/reading/:id" element={<ReadingSessionPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

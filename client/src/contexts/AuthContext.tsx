@@ -69,10 +69,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [auth0IsAuth, auth0User, getAccessTokenSilently]);
 
   useEffect(() => {
+    // Only refresh user when Auth0 has finished loading and is authenticated.
+    // If not authenticated, refreshUser handles clearing the state.
     if (!auth0Loading) {
       void refreshUser();
     }
-  }, [auth0Loading, refreshUser]);
+  }, [auth0Loading, refreshUser, auth0IsAuth]);
 
   const login = useCallback(
     () => loginWithRedirect({ appState: { returnTo: '/dashboard' } }),

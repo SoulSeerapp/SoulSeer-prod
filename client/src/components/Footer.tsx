@@ -10,6 +10,7 @@ const footerLinks = [
   { to: '/help', label: 'Help' },
   { to: '/community', label: 'Community' },
   { to: '/privacy', label: 'Privacy Policy' },
+  { to: '/terms', label: 'Terms of Service' },
 ] as const;
 
 function Footer() {
@@ -34,9 +35,9 @@ function Footer() {
                 </Link>
               </li>
             ))}
-            {isAuthenticated && (
+            {isAuthenticated && user && (
               <li>
-                <Link to="/dashboard" className="footer__link">
+                <Link to={`/dashboard/${user.role}`} className="footer__link">
                   Dashboard
                 </Link>
               </li>

@@ -9,15 +9,16 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 export interface ImageUploadFieldProps {
   label?: string;
   value?: string | null;
+  readerId: number | 'new';
   onChange: (url: string | null) => void;
 }
 
 /**
- * File picker that uploads to POST /api/admin/upload/image and stores the
+ * File picker that uploads to POST /api/admin/readers/:id/image and stores the
  * returned URL via onChange. Enforces the same type/size constraints as the
  * server (jpeg|png|webp, ≤5 MB) so the user gets immediate feedback.
  */
-export function ImageUploadField({ label = 'Profile Image', value, onChange }: ImageUploadFieldProps) {
+export function ImageUploadField({ label = 'Profile Image', value, readerId, onChange }: ImageUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { addToast } = useToast();
   const [uploading, setUploading] = useState(false);
@@ -41,7 +42,7 @@ export function ImageUploadField({ label = 'Profile Image', value, onChange }: I
         const body = new FormData();
         body.append('file', file);
         const res = await apiService.upload<{ url: string }>(
-          '/api/admin/upload/image',
+          `/api/admin/readers/${readerId}/image`,
           body,
         );
         if (!res.url) throw new Error('Upload succeeded but no URL returned');

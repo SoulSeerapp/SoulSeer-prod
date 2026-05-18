@@ -11,20 +11,14 @@ class BillingService {
   private timer: NodeJS.Timeout | null = null;
 
   start(): void {
-    if (this.timer) return;
-    this.timer = setInterval(() => this.tick(), TICK_INTERVAL_MS);
-    logger.info("Billing service started");
+    logger.info("Billing service initialized (cron-driven)");
   }
 
   shutdown(): void {
-    if (this.timer) {
-      clearInterval(this.timer);
-      this.timer = null;
-    }
     logger.info("Billing service stopped");
   }
 
-  private async tick(): Promise<void> {
+  public async tick(): Promise<void> {
     try {
       const db = getDb();
 
@@ -65,7 +59,8 @@ class BillingService {
 
     // Charge 1 minute atomically — balance check INSIDE the transaction
     // to prevent race conditions per build guide section 8.4
-    const readerShare = Math.floor(rate * 0.7);
+    // Modified to 60% reader / 40% platform as requested
+    const readerShare = Math.floor(rate * 0.60);
     const platformShare = rate - readerShare;
 
     let insufficientBalance = false;

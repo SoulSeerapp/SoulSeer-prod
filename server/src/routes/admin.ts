@@ -227,10 +227,10 @@ router.post("/readers", validateBody(createReaderSchema), async (req, res, next)
   }
 });
 
-// ─── POST /api/admin/upload/image — Upload a profile image to Cloudinary ─────
+// ─── POST /api/admin/readers/:id/image — Upload a profile image to Cloudinary ─────
 // Accepts multipart/form-data with a single `file` field. Returns `{ url }`.
 router.post(
-  "/upload/image",
+  "/readers/:id/image",
   (req, res, next) => {
     imageUpload.single("file")(req, res, (err?: unknown) => {
       if (!err) {
@@ -270,8 +270,19 @@ router.post(
         folder: "soulseer/readers",
       });
 
+      const db = getDb();
+      const readerId = parseInt(req.params.id!, 10);
+
+      // Attempt to update the user's profile image if readerId is valid
+      if (!isNaN(readerId)) {
+        await db
+          .update(users)
+          .set({ profileImage: url, updatedAt: new Date() })
+          .where(eq(users.id, readerId));
+      }
+
       logger.info(
-        { adminId: req.user!.id, size: req.file.size, mime: req.file.mimetype },
+        { adminId: req.user!.id, readerId, size: req.file.size, mime: req.file.mimetype },
         "Reader profile image uploaded",
       );
 
