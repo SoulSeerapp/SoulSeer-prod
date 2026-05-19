@@ -792,5 +792,95 @@ router.patch("/posts/:id/lock", async (req, res, next) => {
   }
 });
 
+// ─── POST /api/admin/create-manual-account ────────────────────────────────
+// Securely provision an account of any role via the dashboard manually.
+const createManualAccountSchema = z.object({
+  email: z.string().email(),
+  fullName: z.string().min(1),
+  password: z.string().min(8).max(128),
+  role: z.enum(["admin", "reader", "client"]),
+});
+
+router.post(
+  "/create-manual-account",
+  validateBody(createManualAccountSchema),
+  async (req, res, next) => {
+    try {
+      if (!auth0ManagementService.enabled) {
+        res.status(503).json({
+          error:
+            "Auth0 Management API is not configured. Set AUTH0_MGMT_CLIENT_ID and AUTH0_MGMT_CLIENT_SECRET (or AUTH0_APP_ID/AUTH0_CLIENT_SECRET).",
+          code: "AUTH0_MGMT_DISABLED",
+        });
+        return;
+      }
+
+      const db = getDb();
+      const role = req.body.role;
+      const spec = {
+        role,
+        email: req.body.email,
+        fullName: req.body.fullName,
+        username: req.body.email.split("@")[0],
+        pricingChat: role === "reader" ? 299 : 0,
+        pricingVoice: role === "reader" ? 399 : 0,
+        pricingVideo: role === "reader" ? 499 : 0,
+      };
+
+      const upsert = await auth0ManagementService.upsertUserWithPassword({
+        email: spec.email,
+        password: req.body.password,
+        fullName: spec.fullName,
+        role: spec.role,
+        username: spec.username ?? null,
+      });
+
+      const patch = {
+        email: spec.email,
+        username: spec.username ?? null,
+        fullName: spec.fullName,
+        role: spec.role,
+        pricingChat: spec.pricingChat,
+        pricingVoice: spec.pricingVoice,
+        pricingVideo: spec.pricingVideo,
+        updatedAt: new Date(),
+      };
+
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.auth0Id, upsert.auth0Id));
+
+      let dbAction = "";
+      if (existing) {
+        await db.update(users).set(patch).where(eq(users.id, existing.id));
+        dbAction = "updated";
+      } else {
+        await db
+          .insert(users)
+          .values({ auth0Id: upsert.auth0Id, ...patch })
+          .returning({ id: users.id });
+        dbAction = "inserted";
+      }
+
+      logger.info(
+        { adminId: req.user!.id, email: spec.email, role: spec.role },
+        "Provisioned account manually via admin dashboard",
+      );
+
+      res.json({
+        ok: true,
+        account: {
+          email: spec.email,
+          role: spec.role,
+          auth0Created: upsert.created,
+          dbAction,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;

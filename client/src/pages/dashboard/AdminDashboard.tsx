@@ -107,6 +107,37 @@ export function AdminDashboard() {
   // ── Chat transcript viewer ──
   const [transcriptReadingId, setTranscriptReadingId] = useState<number | null>(null);
 
+  // ── Create Account Manually ──
+  const [createManualOpen, setCreateManualOpen] = useState(false);
+  const [createManualForm, setCreateManualForm] = useState({
+    email: '',
+    fullName: '',
+    password: '',
+    role: 'reader',
+  });
+  const [creatingManual, setCreatingManual] = useState(false);
+
+  const handleCreateManualAccount = useCallback(async () => {
+    if (!createManualForm.email || !createManualForm.fullName || !createManualForm.password) {
+      addToast('error', 'Email, Name, and Password are required');
+      return;
+    }
+    setCreatingManual(true);
+    try {
+      const res = await apiService.post<{
+        ok: true;
+        account: { email: string; role: string; auth0Created: boolean; dbAction: string };
+      }>('/api/admin/create-manual-account', createManualForm);
+      addToast('success', `Provisioned ${res.account.role} account (${res.account.email})`);
+      setCreateManualOpen(false);
+      const u = await apiService.get<User[]>('/api/admin/users');
+      setUsers(u);
+    } catch (err) {
+      addToast('error', err instanceof Error ? err.message : 'Failed to create account');
+    } finally {
+      setCreatingManual(false);
+    }
+  }, [createManualForm, addToast]);
 
   /* ── Load all data ── */
   useEffect(() => {
@@ -570,6 +601,21 @@ export function AdminDashboard() {
                   onChange={setUserSearch}
                   placeholder="Search users by name or email..."
                 />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    setCreateManualForm({
+                      email: '',
+                      fullName: '',
+                      password: '',
+                      role: 'reader',
+                    });
+                    setCreateManualOpen(true);
+                  }}
+                >
+                  Create Account Manually
+                </Button>
               </div>
               <Table
                 columns={userColumns}
@@ -1026,6 +1072,74 @@ export function AdminDashboard() {
           </div>
         </Modal>
 
+        {/* ── Create Manual Account Modal ──────────── */}
+        <Modal
+          open={createManualOpen}
+          onClose={() => setCreateManualOpen(false)}
+          title="Create Account Manually"
+          size="sm"
+          footer={
+            <>
+              <Button variant="ghost" onClick={() => setCreateManualOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleCreateManualAccount}
+                loading={creatingManual}
+              >
+                Create
+              </Button>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-4">
+            <p className="caption">Manually provision an account (Reader, Client, or Admin).</p>
+            <div className="flex flex-col gap-1">
+              <label className="caption">Role</label>
+              <select
+                className="input"
+                value={createManualForm.role}
+                onChange={(e) => setCreateManualForm((p) => ({ ...p, role: e.target.value }))}
+                style={{
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  padding: 'var(--space-2)',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <option value="reader">Reader</option>
+                <option value="client">Client</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <Input
+              label="Full Name"
+              type="text"
+              value={createManualForm.fullName}
+              onChange={(e) =>
+                setCreateManualForm((p) => ({ ...p, fullName: e.target.value }))
+              }
+            />
+            <Input
+              label="Email"
+              type="email"
+              value={createManualForm.email}
+              onChange={(e) =>
+                setCreateManualForm((p) => ({ ...p, email: e.target.value }))
+              }
+            />
+            <Input
+              label="Password"
+              type="password"
+              value={createManualForm.password}
+              onChange={(e) =>
+                setCreateManualForm((p) => ({ ...p, password: e.target.value }))
+              }
+            />
+          </div>
+        </Modal>
 
         {/* ── Chat Transcript Modal ──────────────────── */}
         <ChatTranscriptModal
