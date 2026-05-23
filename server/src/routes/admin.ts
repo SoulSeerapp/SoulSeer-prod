@@ -273,11 +273,25 @@ router.post(
       const db = getDb();
       const readerId = parseInt(req.params.id!, 10);
 
-      // Attempt to update the user's profile image if readerId is valid
-      if (!isNaN(readerId)) {
-        await db
-          .update(users)
-          .set({ profileImage: url, updatedAt: new Date() })
+      if (isNaN(readerId)) {
+        res.status(400).json({ error: "Invalid reader ID" });
+        return;
+      }
+
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.id, readerId), eq(users.role, "reader")));
+
+      if (!existing) {
+        res.status(404).json({ error: "Reader not found" });
+        return;
+      }
+
+      await db
+        .update(users)
+        .set({ profileImage: url, updatedAt: new Date() })
+        .where(eq(users.id, readerId));
           .where(eq(users.id, readerId));
       }
 
