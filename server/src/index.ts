@@ -130,7 +130,17 @@ app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Cron routes
-app.use('/api/cron', cronRoutes);
+app.use(
+  '/api/cron',
+  (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!process.env.CRON_SECRET || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    next();
+  },
+  cronRoutes,
+);
 
 // ─── 404 fallback ───────────────────────────────────────────────────────────
 app.use((_req, res) => {
