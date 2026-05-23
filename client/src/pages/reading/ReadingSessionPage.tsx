@@ -611,6 +611,7 @@ export function ReadingSessionPage() {
 
   useEffect(() => {
     if (!isLive || !reading?.id) return;
+    apiService.post(`/api/readings/${reading.id}/heartbeat`).catch(() => {});
     const interval = setInterval(() => {
       apiService.post(`/api/readings/${reading.id}/heartbeat`).catch(() => {});
     }, 30_000);
