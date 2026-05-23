@@ -304,17 +304,16 @@ router.post(
         return;
       }
 
+      if (!reading.agoraChannel) {
+        res.status(409).json({ error: "Reading has no active Agora channel" });
+        return;
+      }
       await AgoraService.startRtmpPush(
-        `reading_${reading.id}`,
+        reading.agoraChannel,
         req.body.rtmpUrl,
         req.user!.id,
       );
 
-      res.json({ ok: true });
-    } catch (err) {
-      next(err);
-    }
-  },
 );
 
 // ─── POST /api/readings/:id/rtmp/stop — Stop RTMP push ───────────────────────
