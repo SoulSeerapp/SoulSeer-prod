@@ -107,46 +107,37 @@ export function AdminDashboard() {
   // ── Chat transcript viewer ──
   const [transcriptReadingId, setTranscriptReadingId] = useState<number | null>(null);
 
-  // ── Provision test accounts ──
-  const [provisionOpen, setProvisionOpen] = useState(false);
-  const [provisionForm, setProvisionForm] = useState({
-    adminPassword: '',
-    readerPassword: '',
-    clientPassword: '',
+  // ── Create Account Manually ──
+  const [createManualOpen, setCreateManualOpen] = useState(false);
+  const [createManualForm, setCreateManualForm] = useState({
+    email: '',
+    fullName: '',
+    password: '',
+    role: 'reader',
   });
-  const [provisioning, setProvisioning] = useState(false);
+  const [creatingManual, setCreatingManual] = useState(false);
 
-  const handleProvisionTestAccounts = useCallback(async () => {
-    if (
-      !provisionForm.adminPassword ||
-      !provisionForm.readerPassword ||
-      !provisionForm.clientPassword
-    ) {
-      addToast('error', 'All three passwords are required');
+  const handleCreateManualAccount = useCallback(async () => {
+    if (!createManualForm.email || !createManualForm.fullName || !createManualForm.password) {
+      addToast('error', 'Email, Name, and Password are required');
       return;
     }
-    setProvisioning(true);
+    setCreatingManual(true);
     try {
       const res = await apiService.post<{
         ok: true;
-        accounts: Array<{ email: string; role: string; auth0Created: boolean; dbAction: string }>;
-      }>('/api/admin/provision-test-accounts', provisionForm);
-      addToast(
-        'success',
-        `Provisioned ${res.accounts.length} accounts (${res.accounts.map((a) => a.role).join(', ')})`,
-      );
-      setProvisionOpen(false);
+        account: { email: string; role: string; auth0Created: boolean; dbAction: string };
+      }>('/api/admin/create-manual-account', createManualForm);
+      addToast('success', `Provisioned ${res.account.role} account (${res.account.email})`);
+      setCreateManualOpen(false);
       const u = await apiService.get<User[]>('/api/admin/users');
       setUsers(u);
     } catch (err) {
-      addToast(
-        'error',
-        err instanceof Error ? err.message : 'Failed to provision test accounts',
-      );
+      addToast('error', err instanceof Error ? err.message : 'Failed to create account');
     } finally {
-      setProvisioning(false);
+      setCreatingManual(false);
     }
-  }, [provisionForm, addToast]);
+  }, [createManualForm, addToast]);
 
   /* ── Load all data ── */
   useEffect(() => {
@@ -614,15 +605,16 @@ export function AdminDashboard() {
                   variant="secondary"
                   size="sm"
                   onClick={() => {
-                    setProvisionForm({
-                      adminPassword: '',
-                      readerPassword: '',
-                      clientPassword: '',
+                    setCreateManualForm({
+                      email: '',
+                      fullName: '',
+                      password: '',
+                      role: 'reader',
                     });
-                    setProvisionOpen(true);
+                    setCreateManualOpen(true);
                   }}
                 >
-                  Provision Test Accounts
+                  Create Account Manually
                 </Button>
               </div>
               <Table
@@ -1080,57 +1072,70 @@ export function AdminDashboard() {
           </div>
         </Modal>
 
-        {/* ── Provision Test Accounts Modal ──────────── */}
+        {/* ── Create Manual Account Modal ──────────── */}
         <Modal
-          open={provisionOpen}
-          onClose={() => setProvisionOpen(false)}
-          title="Provision Test Accounts"
+          open={createManualOpen}
+          onClose={() => setCreateManualOpen(false)}
+          title="Create Account Manually"
           size="sm"
           footer={
             <>
-              <Button variant="ghost" onClick={() => setProvisionOpen(false)}>
+              <Button variant="ghost" onClick={() => setCreateManualOpen(false)}>
                 Cancel
               </Button>
               <Button
                 variant="primary"
-                onClick={handleProvisionTestAccounts}
-                loading={provisioning}
+                onClick={handleCreateManualAccount}
+                loading={creatingManual}
               >
-                Provision
+                Create
               </Button>
             </>
           }
         >
           <div className="flex flex-col gap-4">
-            <p className="caption">
-              Creates or updates the three QA accounts in Auth0 + DB:
-              <br />
-              admin <code>emilynnj14@gmail.com</code>, reader{' '}
-              <code>emilynn992@gmail.com</code>, client{' '}
-              <code>emily81292@gmail.com</code>.
-            </p>
+            <p className="caption">Manually provision an account (Reader, Client, or Admin).</p>
+            <div className="flex flex-col gap-1">
+              <label className="caption">Role</label>
+              <select
+                className="input"
+                value={createManualForm.role}
+                onChange={(e) => setCreateManualForm((p) => ({ ...p, role: e.target.value }))}
+                style={{
+                  background: 'var(--bg-card)',
+                  color: 'var(--text-primary)',
+                  padding: 'var(--space-2)',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border-subtle)',
+                }}
+              >
+                <option value="reader">Reader</option>
+                <option value="client">Client</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
             <Input
-              label="Admin password"
-              type="password"
-              value={provisionForm.adminPassword}
+              label="Full Name"
+              type="text"
+              value={createManualForm.fullName}
               onChange={(e) =>
-                setProvisionForm((p) => ({ ...p, adminPassword: e.target.value }))
+                setCreateManualForm((p) => ({ ...p, fullName: e.target.value }))
               }
             />
             <Input
-              label="Reader password"
-              type="password"
-              value={provisionForm.readerPassword}
+              label="Email"
+              type="email"
+              value={createManualForm.email}
               onChange={(e) =>
-                setProvisionForm((p) => ({ ...p, readerPassword: e.target.value }))
+                setCreateManualForm((p) => ({ ...p, email: e.target.value }))
               }
             />
             <Input
-              label="Client password"
+              label="Password"
               type="password"
-              value={provisionForm.clientPassword}
+              value={createManualForm.password}
               onChange={(e) =>
-                setProvisionForm((p) => ({ ...p, clientPassword: e.target.value }))
+                setCreateManualForm((p) => ({ ...p, password: e.target.value }))
               }
             />
           </div>

@@ -792,47 +792,18 @@ router.patch("/posts/:id/lock", async (req, res, next) => {
   }
 });
 
-// ─── POST /api/admin/provision-test-accounts ────────────────────────────────
-// Idempotent QA helper that creates (or repoints) the three known test
-// accounts — admin, reader, client — with caller-supplied passwords. Useful
-// for getting a clean slate after Auth0/DB resets without needing local CLI
-// access. Admin-only (router-level requireRole already enforces this).
-const provisionSchema = z.object({
-  adminPassword: z.string().min(8).max(128),
-  readerPassword: z.string().min(8).max(128),
-  clientPassword: z.string().min(8).max(128),
+// ─── POST /api/admin/create-manual-account ────────────────────────────────
+// Securely provision an account of any role via the dashboard manually.
+const createManualAccountSchema = z.object({
+  email: z.string().email(),
+  fullName: z.string().min(1),
+  password: z.string().min(8).max(128),
+  role: z.enum(["admin", "reader", "client"]),
 });
 
-const TEST_ACCOUNTS = [
-  {
-    role: "admin" as const,
-    email: "emilynnj14@gmail.com",
-    fullName: "Emilynn (Admin)",
-    username: "emilynn-admin",
-  },
-  {
-    role: "reader" as const,
-    email: "emilynn992@gmail.com",
-    fullName: "Emilynn",
-    username: "emilynn",
-    pricingChat: 299,
-    pricingVoice: 399,
-    pricingVideo: 499,
-    bio: "Test reader account for QA.",
-    specialties: "Tarot, Clairvoyance, Mediumship",
-  },
-  {
-    role: "client" as const,
-    email: "emily81292@gmail.com",
-    fullName: "Emily",
-    username: "emily",
-    startingBalanceCents: 5000,
-  },
-];
-
 router.post(
-  "/provision-test-accounts",
-  validateBody(provisionSchema),
+  "/create-manual-account",
+  validateBody(createManualAccountSchema),
   async (req, res, next) => {
     try {
       if (!auth0ManagementService.enabled) {
@@ -845,74 +816,67 @@ router.post(
       }
 
       const db = getDb();
-      const passwordByRole: Record<string, string> = {
-        admin: req.body.adminPassword,
-        reader: req.body.readerPassword,
-        client: req.body.clientPassword,
+      const role = req.body.role;
+      const spec = {
+        role,
+        email: req.body.email,
+        fullName: req.body.fullName,
+        username: req.body.email.split("@")[0],
+        pricingChat: role === "reader" ? 299 : 0,
+        pricingVoice: role === "reader" ? 399 : 0,
+        pricingVideo: role === "reader" ? 499 : 0,
       };
 
-      const results: Array<{
-        email: string;
-        role: string;
-        auth0Created: boolean;
-        dbAction: "inserted" | "updated";
-      }> = [];
+      const upsert = await auth0ManagementService.upsertUserWithPassword({
+        email: spec.email,
+        password: req.body.password,
+        fullName: spec.fullName,
+        role: spec.role,
+        username: spec.username ?? null,
+      });
 
-      for (const spec of TEST_ACCOUNTS) {
-        const upsert = await auth0ManagementService.upsertUserWithPassword({
-          email: spec.email,
-          password: passwordByRole[spec.role]!,
-          fullName: spec.fullName,
-          role: spec.role,
-          username: spec.username ?? null,
-        });
+      const patch = {
+        email: spec.email,
+        username: spec.username ?? null,
+        fullName: spec.fullName,
+        role: spec.role,
+        pricingChat: spec.pricingChat,
+        pricingVoice: spec.pricingVoice,
+        pricingVideo: spec.pricingVideo,
+        updatedAt: new Date(),
+      };
 
-        const patch = {
-          email: spec.email,
-          username: spec.username ?? null,
-          fullName: spec.fullName,
-          role: spec.role,
-          bio: "bio" in spec ? spec.bio ?? null : null,
-          specialties: "specialties" in spec ? spec.specialties ?? null : null,
-          pricingChat: "pricingChat" in spec ? spec.pricingChat ?? 0 : 0,
-          pricingVoice: "pricingVoice" in spec ? spec.pricingVoice ?? 0 : 0,
-          pricingVideo: "pricingVideo" in spec ? spec.pricingVideo ?? 0 : 0,
-          balance: "startingBalanceCents" in spec ? spec.startingBalanceCents ?? 0 : 0,
-          updatedAt: new Date(),
-        };
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.auth0Id, upsert.auth0Id));
 
-        const [existing] = await db
-          .select({ id: users.id })
-          .from(users)
-          .where(eq(users.auth0Id, upsert.auth0Id));
-
-        if (existing) {
-          await db.update(users).set(patch).where(eq(users.id, existing.id));
-          results.push({
-            email: spec.email,
-            role: spec.role,
-            auth0Created: upsert.created,
-            dbAction: "updated",
-          });
-        } else {
-          await db
-            .insert(users)
-            .values({ auth0Id: upsert.auth0Id, ...patch })
-            .returning({ id: users.id });
-          results.push({
-            email: spec.email,
-            role: spec.role,
-            auth0Created: upsert.created,
-            dbAction: "inserted",
-          });
-        }
+      let dbAction = "";
+      if (existing) {
+        await db.update(users).set(patch).where(eq(users.id, existing.id));
+        dbAction = "updated";
+      } else {
+        await db
+          .insert(users)
+          .values({ auth0Id: upsert.auth0Id, ...patch })
+          .returning({ id: users.id });
+        dbAction = "inserted";
       }
 
       logger.info(
-        { adminId: req.user!.id, results },
-        "Provisioned test accounts via admin endpoint",
+        { adminId: req.user!.id, email: spec.email, role: spec.role },
+        "Provisioned account manually via admin dashboard",
       );
-      res.json({ ok: true, accounts: results });
+
+      res.json({
+        ok: true,
+        account: {
+          email: spec.email,
+          role: spec.role,
+          auth0Created: upsert.created,
+          dbAction,
+        },
+      });
     } catch (err) {
       next(err);
     }
