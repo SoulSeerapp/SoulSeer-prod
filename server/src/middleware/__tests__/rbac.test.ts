@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { requireParticipant, resolveUser, requireRole } from '../rbac';
+import { requireParticipant, resolveUser } from '../rbac';
 import { Request, Response, NextFunction } from 'express';
 
 const mockSelect = vi.fn();
