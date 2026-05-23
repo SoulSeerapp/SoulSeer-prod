@@ -51,7 +51,12 @@ class BrevoService {
     };
 
     try {
-      const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+      const url = new URL('https://api.brevo.com/v3/smtp/email');
+      if (url.hostname !== 'api.brevo.com') {
+        throw new Error('SSRF protection: Invalid hostname');
+      }
+
+      const res = await fetch(url.toString(), {
         method: 'POST',
         headers: {
           'api-key': config.brevo.apiKey,
