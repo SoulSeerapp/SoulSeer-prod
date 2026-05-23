@@ -11,6 +11,32 @@ class BillingService {
   private timer: NodeJS.Timeout | null = null;
 
   start(): void {
+    if ((this as any).timer) {
+      logger.warn("Billing service start() called but timer already running");
+      return;
+    }
+    (this as any).timer = setInterval(async () => {
+      try {
+        if (typeof (this as any).runBillingCycle === "function") {
+          await (this as any).runBillingCycle();
+        } else {
+          logger.debug("Billing service tick");
+        }
+      } catch (err) {
+        logger.error("Billing service tick failed", { err });
+      }
+    }, TICK_INTERVAL_MS);
+    logger.info("Billing service started (interval scheduled)");
+  }
+
+  shutdown(): void {
+    if ((this as any).timer) {
+      clearInterval((this as any).timer);
+      (this as any).timer = undefined;
+      logger.info("Billing service stopped (interval cleared)");
+    } else {
+      logger.warn("Billing service shutdown() called but no timer was running");
+    }
     logger.info("Billing service initialized (cron-driven)");
   }
 
