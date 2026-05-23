@@ -326,7 +326,7 @@ router.post(
     try {
       const reading = req.reading!;
 
-      await AgoraService.stopRtmpPush(`reading_${reading.id}`);
+      await AgoraService.stopRtmpPush(reading.agoraChannel!);
 
       res.json({ ok: true });
     } catch (err) {
