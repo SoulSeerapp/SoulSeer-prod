@@ -18,7 +18,6 @@ import { DashboardPage } from './pages/dashboard/DashboardPage';
 import { AdminDashboard } from './pages/dashboard/AdminDashboard';
 import { ReaderDashboard } from './pages/dashboard/ReaderDashboard';
 import { ClientDashboard } from './pages/dashboard/ClientDashboard';
-import { MessagesPage } from './pages/dashboard/MessagesPage';
 import { ReadingSessionPage } from './pages/reading/ReadingSessionPage';
 import { AboutPage } from './pages/AboutPage';
 import { HelpPage } from './pages/HelpPage';
@@ -45,7 +44,6 @@ function AppRoutes() {
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
           <Route path="/dashboard/reader" element={<ReaderDashboard />} />
           <Route path="/dashboard/client" element={<ClientDashboard />} />
-          <Route path="/dashboard/messages" element={<MessagesPage />} />
           <Route path="/reading/:id" element={<ReadingSessionPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/help" element={<HelpPage />} />

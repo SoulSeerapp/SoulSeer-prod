@@ -94,18 +94,11 @@ function Navigation() {
             </li>
           ))}
           {isAuthenticated && user && (
-            <>
-              <li>
-                <NavLink to={`/dashboard/${user.role}`} className={linkClass}>
-                  Dashboard
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/dashboard/messages" className={linkClass}>
-                  Messages
-                </NavLink>
-              </li>
-            </>
+            <li>
+              <NavLink to={`/dashboard/${user.role}`} className={linkClass}>
+                Dashboard
+              </NavLink>
+            </li>
           )}
           {profilePath && (
             <li>
@@ -162,14 +155,9 @@ function Navigation() {
           </NavLink>
         ))}
         {isAuthenticated && user && (
-          <>
-            <NavLink to={`/dashboard/${user.role}`} className={mobileLinkClass}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/dashboard/messages" className={mobileLinkClass}>
-              Messages
-            </NavLink>
-          </>
+          <NavLink to={`/dashboard/${user.role}`} className={mobileLinkClass}>
+            Dashboard
+          </NavLink>
         )}
         {profilePath && (
           <NavLink to={profilePath} className={mobileLinkClass}>

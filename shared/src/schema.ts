@@ -50,7 +50,6 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
   "reader_payout",
   "refund",
   "admin_adjustment",
-  "message_charge",
 ]);
 
 // ─── Users ──────────────────────────────────────────────────────────────────
@@ -296,35 +295,6 @@ export const forumFlags = pgTable(
   }),
 );
 
-
-// ─── Messages (Premium Messaging) ───────────────────────────────────────────
-
-export const messages = pgTable(
-  "messages",
-  {
-    id: serial("id").primaryKey(),
-    senderId: integer("sender_id")
-      .notNull()
-      .references(() => users.id),
-    receiverId: integer("receiver_id")
-      .notNull()
-      .references(() => users.id),
-
-    content: text("content").notNull(),
-    price: integer("price").notNull().default(0), // Price in cents
-    isRead: boolean("is_read").notNull().default(false),
-
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => ({
-    senderIdIdx: index("messages_sender_id_idx").on(table.senderId),
-    receiverIdIdx: index("messages_receiver_id_idx").on(table.receiverId),
-    createdAtIdx: index("messages_created_at_idx").on(table.createdAt),
-  })
-);
-
 // ─── Relations ──────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -334,8 +304,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   forumPosts: many(forumPosts),
   forumComments: many(forumComments),
   forumFlags: many(forumFlags),
-  sentMessages: many(messages, { relationName: "sentMessages" }),
-  receivedMessages: many(messages, { relationName: "receivedMessages" }),
 }));
 
 export const readingsRelations = relations(readings, ({ one, many }) => ({
@@ -414,17 +382,3 @@ export const newsletterSubscribers = pgTable(
     emailIdx: uniqueIndex("newsletter_subscribers_email_idx").on(table.email),
   }),
 );
-
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  sender: one(users, {
-    fields: [messages.senderId],
-    references: [users.id],
-    relationName: "sentMessages",
-  }),
-  receiver: one(users, {
-    fields: [messages.receiverId],
-    references: [users.id],
-    relationName: "receivedMessages",
-  }),
-}));

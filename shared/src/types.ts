@@ -6,7 +6,6 @@ import type {
   forumPosts,
   forumComments,
   forumFlags,
-  messages,
 } from "./schema.js";
 
 // ─── Table Row Types (Select = full row from DB) ────────────────────────────
@@ -17,7 +16,6 @@ export type SelectTransaction = InferSelectModel<typeof transactions>;
 export type SelectForumPost = InferSelectModel<typeof forumPosts>;
 export type SelectForumComment = InferSelectModel<typeof forumComments>;
 export type SelectForumFlag = InferSelectModel<typeof forumFlags>;
-export type SelectMessage = InferSelectModel<typeof messages>;
 
 // ─── Insert Types (for creating new rows) ───────────────────────────────────
 
@@ -27,7 +25,6 @@ export type InsertTransaction = InferInsertModel<typeof transactions>;
 export type InsertForumPost = InferInsertModel<typeof forumPosts>;
 export type InsertForumComment = InferInsertModel<typeof forumComments>;
 export type InsertForumFlag = InferInsertModel<typeof forumFlags>;
-export type InsertMessage = InferInsertModel<typeof messages>;
 
 // ─── Enum Value Types ───────────────────────────────────────────────────────
 

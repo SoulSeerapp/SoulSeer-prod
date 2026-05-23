@@ -16,7 +16,7 @@ export const userRoleSchema = z.enum(["client", "reader", "admin"]);
 export const readingTypeSchema = z.enum(["chat", "voice", "video"]);
 export const readingStatusSchema = z.enum(["pending", "accepted", "in_progress", "completed", "cancelled", "disputed"]);
 export const paymentStatusSchema = z.enum(["pending", "paid", "refunded"]);
-export const transactionTypeSchema = z.enum(["top_up", "reading_charge", "reader_credit", "payout", "adjustment", "refund", "message_charge"]);
+export const transactionTypeSchema = z.enum(["top_up", "reading_charge", "reader_credit", "payout", "adjustment", "refund"]);
 export const forumCategorySchema = z.enum(["general", "readings", "spiritual_growth", "ask_a_reader", "announcements"]);
 
 // ─── Auth / User Sync ───────────────────────────────────────────────────────
@@ -46,13 +46,6 @@ export const updatePricingSchema = z.object({
 });
 
 export const updateOnlineStatusSchema = z.object({ isOnline: z.boolean() });
-
-// ─── Messages ───────────────────────────────────────────────────────────────
-
-export const sendMessageSchema = z.object({
-  content: z.string().min(1, "Message content is required").max(5000),
-  price: nonNegInt.max(10_000).optional().default(0), // optional price up to $100
-});
 
 // ─── Readings ───────────────────────────────────────────────────────────────
 
@@ -197,5 +190,4 @@ export type ForumFilterInput = z.infer<typeof forumFilterSchema>;
 export type ReadingFilterInput = z.infer<typeof readingFilterSchema>;
 export type TransactionFilterInput = z.infer<typeof transactionFilterSchema>;
 export type AdminUserFilterInput = z.infer<typeof adminUserFilterSchema>;
-export type SendMessageInput = z.infer<typeof sendMessageSchema>;
 export type IdParam = z.infer<typeof idParamSchema>;

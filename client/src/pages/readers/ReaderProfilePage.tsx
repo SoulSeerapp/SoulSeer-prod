@@ -177,27 +177,11 @@ export function ReaderProfilePage() {
 
         {/* ── Rates & Start Reading ──────────────────── */}
         <section className="section">
-          <div className="flex justify-between items-center mb-4">
-            <div className="section-title" style={{ margin: 0 }}>
-              <h2 className="section-title__text">Reading Rates</h2>
-              <div className="section-title__divider" />
-            </div>
-            {user?.id !== reader.id && (
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (!isAuthenticated) {
-                    login();
-                    return;
-                  }
-                  navigate(`/dashboard/messages?userId=${reader.id}`);
-                }}
-              >
-                ✉️ Message Reader
-              </Button>
-            )}
+          <div className="section-title">
+            <h2 className="section-title__text">Reading Rates</h2>
+            <div className="section-title__divider" />
           </div>
-          <div className="profile-rates" style={{ marginTop: 'var(--space-4)' }}>
+          <div className="profile-rates">
             {reader.pricingChat > 0 && (
               <div className="card card--interactive" onClick={() => handleStartReading('chat')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') handleStartReading('chat'); }}>
                 <div className="profile-rate">
