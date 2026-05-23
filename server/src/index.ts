@@ -124,7 +124,9 @@ app.use('/api/forum', forumRoutes);
 
 // Newsletter routes (public signup)
 import newsletterRoutes from './routes/newsletter';
+import messagesRoutes from './routes/messages';
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/messages', messagesRoutes);
 
 // Admin routes
 app.use('/api/admin', adminRoutes);
