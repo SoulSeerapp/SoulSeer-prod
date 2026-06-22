@@ -8,7 +8,6 @@ import { requireParticipant } from "../middleware/rbac";
 import { validateBody } from "../middleware/validate";
 import { AgoraService } from "../services/agora-service";
 import { wsService } from "../services/websocket-service";
-import { billingService } from "../services/billing-service";
 import { logger } from "../utils/logger";
 import { strictLimiter } from "../middleware/rate-limit";
 
